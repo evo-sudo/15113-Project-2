@@ -1,0 +1,554 @@
+:root{
+  --panel:#fffdfa;
+  --border:rgba(0,0,0,0.18);
+  --ink:#111827;
+  --muted:#4b5563;
+
+  --red:#ef4444;
+  --redDark:#b91c1c;
+
+  --green:#22c55e;
+  --amber:#f59e0b;
+  --slate:#334155;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  color:var(--ink);
+  min-height:100vh;
+  background:
+    radial-gradient(1200px 400px at 50% -10%, #e80000 0%, transparent 60%),
+    linear-gradient(#ffffff 0%, #000072 100%);
+}
+
+.wrap{
+  max-width:1200px;
+  margin:20px auto;
+  padding:24px;
+  background:rgba(237, 237, 237, 0.92);
+  border-radius:22px;
+  border:2px solid var(--border);
+  box-shadow:0 30px 80px rgba(0,0,0,0.25);
+}
+
+h1{
+  margin:0;
+  font-size:36px;
+  font-weight:900;
+}
+
+.sub{
+  margin:6px 0 0;
+  font-weight:600;
+  color:var(--muted);
+}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  margin-bottom:16px;
+}
+
+.scorebox{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.stat{
+  background:var(--panel);
+  border:2px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  min-width:110px;
+}
+
+.label{
+  font-size:12px;
+  font-weight:700;
+  color:#6b7280;
+}
+
+.value{
+  font-size:22px;
+  font-weight:900;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1.4fr 0.6fr;
+  gap:16px;
+}
+
+.battleCard,
+.infoCard{
+  background:var(--panel);
+  border:2px solid var(--border);
+  border-radius:18px;
+  padding:16px;
+}
+
+.battleTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+
+.battleTitle{
+  font-weight:900;
+}
+
+.battleStatus{
+  font-weight:700;
+  color:#374151;
+}
+
+/* ===========================
+   RANK BAR
+   =========================== */
+
+.rankRow{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:flex-end;
+  margin-bottom:12px;
+  padding:10px;
+  border:2px solid var(--border);
+  border-radius:14px;
+  background:#f9fafb;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:220px;
+  flex:1;
+}
+
+label{
+  font-size:12px;
+  font-weight:900;
+  color:#6b7280;
+}
+
+select, input{
+  padding:10px 12px;
+  border-radius:12px;
+  border:2px solid var(--border);
+  background:white;
+  font-weight:700;
+}
+
+.mutedSmall{
+  font-size:12px;
+  font-weight:800;
+  color:#6b7280;
+  margin-left:auto;
+}
+
+/* ===========================
+   STADIUM BATTLE BACKGROUND
+   =========================== */
+
+.battlefield{
+  position:relative;
+  height:380px;
+  border-radius:16px;
+  overflow:hidden;
+  border:2px solid rgba(0,0,0,0.2);
+  background:
+    linear-gradient(rgba(0,0,0,0.18), rgba(0,0,0,0.18)),
+    url("Arena.png");
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+}
+
+.battlefield::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(120px 60px at 20% 8%, rgba(255,255,255,0.45), transparent 60%),
+    radial-gradient(140px 70px at 80% 8%, rgba(255,255,255,0.45), transparent 60%);
+  pointer-events:none;
+}
+
+.side{
+  position:absolute;
+  width:50%;
+  height:100%;
+}
+
+.player{ left:0; }
+.opponent{ right:0; }
+
+.platform{
+  position:absolute;
+  border-radius:999px;
+  background:rgba(0,0,0,0.35);
+  transform:skewX(-6deg);
+}
+
+.youPlat{
+  width:300px;
+  height:90px;
+  left:40px;
+  bottom:42px;
+}
+
+.oppPlat{
+  width:240px;
+  height:70px;
+  right:60px;
+  top:190px;
+}
+
+.pokeSprite{
+  position:absolute;
+  width:200px;
+  height:200px;
+  object-fit:contain;
+  image-rendering:pixelated;
+  user-select:none;
+  filter:drop-shadow(0 14px 12px rgba(0,0,0,0.5));
+}
+
+.player .pokeSprite{
+  left:70px;
+  bottom:78px;
+}
+
+.opponent .pokeSprite{
+  right:70px;
+  top:74px;
+}
+
+.silhouette{
+  filter:brightness(0) contrast(12);
+}
+
+.hiddenSprite{
+  display:none;
+}
+
+/* ===========================
+   NAME PLATES
+   =========================== */
+
+.namePlate{
+  position:absolute;
+  top:12px;
+  left:12px;
+  background:rgba(255,255,255,0.95);
+  border:2px solid var(--border);
+  border-radius:12px;
+  padding:8px 10px;
+  font-weight:900;
+  z-index:2;
+}
+
+.opponent .namePlate{
+  left:auto;
+  right:12px;
+  text-align:right;
+}
+
+.plateLabel{
+  font-size:12px;
+  font-weight:800;
+  color:#6b7280;
+}
+
+.plateValue{
+  font-weight:900;
+}
+
+/* ===========================
+   HP + BOT PILL
+   =========================== */
+
+.hpWrap{
+  position:absolute;
+  left:12px;
+  top:74px;
+  width:260px;
+  background:rgba(255,255,255,0.92);
+  border:2px solid var(--border);
+  border-radius:12px;
+  padding:8px 10px;
+  z-index:2;
+}
+
+.oppHp{
+  left:auto;
+  right:12px;
+  width:240px;
+  text-align:right;
+}
+
+.hpLabel{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  font-size:12px;
+  font-weight:900;
+  color:#6b7280;
+  margin-bottom:6px;
+}
+
+.hpBar{
+  height:12px;
+  border-radius:999px;
+  background:#e5e7eb;
+  overflow:hidden;
+  border:1px solid rgba(0,0,0,0.15);
+}
+
+.hpFill{
+  height:100%;
+  width:100%;
+  background:linear-gradient(90deg, var(--green), var(--amber), var(--red));
+  transform-origin:left center;
+}
+
+.miniPill{
+  margin-top:8px;
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  border:2px solid var(--border);
+  background:white;
+  color:#111827;
+}
+
+/* ===========================
+   CONTROLS
+   =========================== */
+
+.controls{
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.guessRow{
+  display:flex;
+  gap:10px;
+  flex:1;
+  min-width:280px;
+}
+
+.btn{
+  padding:10px 14px;
+  border-radius:12px;
+  border:2px solid var(--border);
+  background:white;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.btn.primary{
+  background:var(--red);
+  color:white;
+  border-color:var(--redDark);
+}
+
+.btn.small{
+  padding:8px 12px;
+  border-radius:10px;
+  font-size:13px;
+}
+
+.btn.danger{
+  background:#111827;
+  color:white;
+  border-color:#0f172a;
+}
+
+/* ===========================
+   META ROW / PILLS
+   =========================== */
+
+.metaRow{
+  margin-top:10px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.pill{
+  background:#f9fafb;
+  border:2px solid var(--border);
+  border-radius:999px;
+  padding:8px 12px;
+  font-weight:800;
+  color:#374151;
+}
+
+/* ===========================
+   HINTS + MESSAGE
+   =========================== */
+
+.msg{
+  margin-top:8px;
+  font-weight:800;
+  color:#374151;
+}
+
+.hintPanel{
+  margin-top:14px;
+}
+
+.hintBtns{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.hints{
+  margin-top:8px;
+  border:2px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  background:#f9fafb;
+}
+
+/* ===========================
+   REVEAL PANEL
+   =========================== */
+
+.revealBlock,
+.statsBox{
+  border:2px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  background:#f9fafb;
+}
+
+.statsBox{
+  margin-top:10px;
+  min-height:240px;
+}
+
+/* ===========================
+   HISTORY
+   =========================== */
+
+.sectionHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+}
+
+.sectionHeader h3{
+  margin:0;
+  font-size:14px;
+  font-weight:900;
+  color:#111827;
+}
+
+.history{
+  margin-top:8px;
+  border:2px solid var(--border);
+  border-radius:12px;
+  background:white;
+  max-height:240px;
+  overflow:auto;
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid rgba(0,0,0,0.08);
+  font-weight:800;
+}
+
+.row:last-child{ border-bottom:none; }
+
+.row .left{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.badge{
+  display:inline-block;
+  font-size:12px;
+  font-weight:900;
+  padding:4px 8px;
+  border-radius:999px;
+  border:2px solid var(--border);
+  background:#f9fafb;
+}
+
+.badge.win{ background:rgba(34,197,94,0.15); }
+.badge.loss{ background:rgba(239,68,68,0.12); }
+
+.smallText{
+  font-size:12px;
+  font-weight:800;
+  color:#6b7280;
+}
+
+/* ===========================
+   LOADING
+   =========================== */
+
+.overlay{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  background:rgba(0,0,0,0.45);
+  color:white;
+  font-weight:900;
+  z-index:5;
+}
+
+.hidden{ display:none; }
+
+/* ===========================
+   FOOTER
+   =========================== */
+
+.foot{
+  text-align:center;
+  margin-top:10px;
+  font-weight:800;
+  color:#4b5563;
+}
+
+.placeholder{
+  position:absolute;
+  left:70px;
+  bottom:140px;
+  background:rgba(255,255,255,0.88);
+  border:2px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  font-weight:900;
+  color:#111827;
+}
+
+@media(max-width:980px){
+  .grid{ grid-template-columns:1fr; }
+  .placeholder{ left:22px; }
+}

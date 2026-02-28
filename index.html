@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PokéArena — Ranked Guessing</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <h1>PokéArena</h1>
+        <p class="sub">Ranked Pokémon guessing battles powered by your Render backend + PokéAPI.</p>
+      </div>
+
+      <div class="scorebox">
+        <div class="stat">
+          <div class="label">Rating</div>
+          <div id="rating" class="value">1000</div>
+        </div>
+        <div class="stat">
+          <div class="label">Wins</div>
+          <div id="wins" class="value">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">Losses</div>
+          <div id="losses" class="value">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">Streak</div>
+          <div id="streak" class="value">0</div>
+        </div>
+      </div>
+    </header>
+
+    <section class="grid">
+      <section class="battleCard">
+        <div class="battleTop">
+          <span class="battleTitle">Ranked Match</span>
+          <span id="roundStatus" class="battleStatus">Set your name and click New Round.</span>
+        </div>
+
+        <div class="rankRow">
+          <div class="field">
+            <label for="playerName">Player</label>
+            <input id="playerName" placeholder="Enter a username (no password)" autocomplete="off" />
+          </div>
+
+          <div class="field">
+            <label for="difficulty">Difficulty</label>
+            <select id="difficulty">
+              <option value="easy">Easy (more points, lower bot rating)</option>
+              <option value="standard" selected>Standard</option>
+              <option value="hard">Hard (fewer points, higher bot rating)</option>
+            </select>
+          </div>
+
+          <button id="saveProfileBtn" class="btn primary">Save</button>
+
+          <div class="mutedSmall">
+            Backend: <span id="backendStatus">—</span>
+          </div>
+        </div>
+
+        <div class="battlefield">
+          <div id="loadingOverlay" class="overlay hidden">Loading…</div>
+
+          <div class="side player">
+            <div class="namePlate">
+              <div class="plateLabel">Your Pokémon</div>
+              <div id="yourName" class="plateValue">???</div>
+            </div>
+
+            <div class="hpWrap">
+              <div class="hpLabel">
+                <span>HP</span>
+                <span id="hpText">100 / 100</span>
+              </div>
+              <div class="hpBar">
+                <div id="hpFill" class="hpFill"></div>
+              </div>
+            </div>
+
+            <div class="platform youPlat"></div>
+            <img id="yourImg" class="pokeSprite silhouette hiddenSprite" alt="" />
+            <div id="placeholder" class="placeholder">Click <b>New Round</b></div>
+          </div>
+
+          <div class="side opponent">
+            <div class="namePlate">
+              <div class="plateLabel">Opponent</div>
+              <div id="oppName" class="plateValue">—</div>
+            </div>
+
+            <div class="hpWrap oppHp">
+              <div class="hpLabel">
+                <span>BOT</span>
+                <span id="botRatingText">Rating —</span>
+              </div>
+              <div class="miniPill" id="botPill">STANDARD</div>
+            </div>
+
+            <div class="platform oppPlat"></div>
+            <img id="oppImg" class="pokeSprite hiddenSprite" alt="" />
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="newBtn" class="btn primary">New Round</button>
+          <button id="giveUpBtn" class="btn danger">Give Up</button>
+
+          <div class="guessRow">
+            <input id="guessInput" placeholder="Guess your Pokémon…" autocomplete="off" />
+            <button id="submitBtn" class="btn primary">Submit</button>
+          </div>
+        </div>
+
+        <div class="metaRow">
+          <div class="pill">
+            Attempts: <b id="attempts">0</b>
+          </div>
+          <div class="pill">
+            Round Points: <b id="roundPoints">100</b>
+          </div>
+          <div class="pill">
+            K-Factor: <b id="kFactor">24</b>
+          </div>
+        </div>
+
+        <p id="msg" class="msg"></p>
+
+        <div class="hintPanel">
+          <h2>Hints (reduce HP)</h2>
+          <div class="hintBtns">
+            <button id="hintGenBtn" class="btn small">Generation (-10)</button>
+            <button id="hintTypeBtn" class="btn small">Type(s) (-15)</button>
+            <button id="hintDexBtn" class="btn small">Pokédex (-20)</button>
+          </div>
+
+          <div class="hints">
+            <p><b>Gen:</b> <span id="hintGen">—</span></p>
+            <p><b>Types:</b> <span id="hintTypes">—</span></p>
+            <p><b>Dex:</b> <span id="hintDex">—</span></p>
+          </div>
+        </div>
+      </section>
+
+      <aside class="infoCard">
+        <h2>Ranked Dashboard</h2>
+
+        <div class="revealBlock">
+          <p><b>Last Result:</b> <span id="lastResult">—</span></p>
+          <p><b>Δ Rating:</b> <span id="deltaRating">—</span></p>
+          <p><b>Win Rate:</b> <span id="winRate">—</span></p>
+          <p><b>Best Streak:</b> <span id="bestStreak">—</span></p>
+        </div>
+
+        <div class="revealBlock" style="margin-top:10px;">
+          <p><b>Reveal Name:</b> <span id="revealName">—</span></p>
+          <p><b>Reveal Types:</b> <span id="revealTypes">—</span></p>
+        </div>
+
+        <div id="statsBars" class="statsBox"></div>
+
+        <div class="sectionHeader">
+          <h3>Match History (local)</h3>
+          <button id="clearHistoryBtn" class="btn small">Clear</button>
+        </div>
+        <div id="history" class="history"></div>
+      </aside>
+    </section>
+
+    <footer class="foot">
+      Uses your Flask API on Render + PokéAPI. Ranked stats are stored locally unless you later add a DB.
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
