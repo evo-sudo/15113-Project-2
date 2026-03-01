@@ -391,6 +391,11 @@ function showReveal(info) {
 
 function damage(amount, why) {
   round.hp = clamp(round.hp - amount, 0, round.hpMax);
+
+  // ✅ SHAKE ON DAMAGE
+  yourImg.classList.add("shake");
+  setTimeout(() => yourImg.classList.remove("shake"), 300);
+
   renderRoundMeta();
   setMessage(why);
 

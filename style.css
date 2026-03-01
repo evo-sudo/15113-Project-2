@@ -340,6 +340,7 @@ select, input{
   width:100%;
   background:linear-gradient(90deg, var(--green), var(--amber), var(--red));
   transform-origin:left center;
+  transition: transform 0.4s cubic-bezier(.22,1,.36,1);
 }
 
 .miniPill{
@@ -605,3 +606,17 @@ select, input{
   0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
 }
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+
+.shake {
+  animation: shake 0.3s ease;
+}
+
