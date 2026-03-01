@@ -580,7 +580,30 @@ async function init() {
     setMessage("Backend OK. Save your username, then start a round.");
   }
 }
+// === Cursor Trail: PokéSparks ===
+(() => {
+  let last = 0;
 
+  window.addEventListener("pointermove", (e) => {
+    const now = performance.now();
+    if (now - last < 25) return;
+    last = now;
+
+    const spark = document.createElement("div");
+    spark.className = "spark";
+
+    spark.style.left = `${e.clientX}px`;
+    spark.style.top = `${e.clientY}px`;
+
+    // Random lightning direction
+    const angle = Math.random() * 360;
+    spark.style.setProperty("--angle", `${angle}deg`);
+
+    document.body.appendChild(spark);
+
+    setTimeout(() => spark.remove(), 400);
+  });
+})();
 saveProfileBtn.addEventListener("click", saveProfile);
 newBtn.addEventListener("click", newRound);
 

@@ -552,3 +552,35 @@ select, input{
   .grid{ grid-template-columns:1fr; }
   .placeholder{ left:22px; }
 }
+
+.spark {
+  position: fixed;
+  width: 6px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 9999;
+  background: linear-gradient(180deg, #fff700, #facc15);
+  border-radius: 2px;
+  box-shadow:
+    0 0 6px #fff700,
+    0 0 12px #facc15,
+    0 0 20px #facc15;
+  transform-origin: center;
+  animation: sparkZap 400ms ease-out forwards;
+}
+
+@keyframes sparkZap {
+  0% {
+    opacity: 1;
+    transform: scaleY(1) rotate(var(--angle));
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(0.2) rotate(var(--angle));
+  }
+}
+
+@keyframes sparkFade {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+}
