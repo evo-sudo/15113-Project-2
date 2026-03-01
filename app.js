@@ -73,7 +73,6 @@ const historyEl = el("history");
 const clearHistoryBtn = el("clearHistoryBtn");
 
 // ---- Ranked model (LOCAL) ----
-// We store everything under one key so it’s easy to explain and migrate later.
 const STORAGE_KEY = "pokearena_ranked_v1";
 
 function loadState() {
@@ -282,6 +281,102 @@ function escapeHtml(s) {
     .replaceAll("'","&#039;");
 }
 
+// ===========================
+// Pokéball Round Transition
+// ===========================
+
+function sleep(ms) {
+  return new Promise((res) => setTimeout(res, ms));
+}
+
+function centerOf(elm) {
+  const r = elm.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+function makeBallAt(x, y) {
+  const ball = document.createElement("div");
+  ball.className = "pokeball spin";
+  ball.style.left = `${x}px`;
+  ball.style.top = `${y}px`;
+  ball.style.transform = "translate(-50%, -50%)";
+  document.body.appendChild(ball);
+  return ball;
+}
+
+async function recallIntoBallIfVisible() {
+  // If sprite isn't visible, nothing to recall.
+  if (!yourImg) return;
+  if (yourImg.classList.contains("hiddenSprite")) return;
+
+  // If placeholder is still showing, treat as "no active visual"
+  if (placeholder && placeholder.style.display !== "none") return;
+
+  const p = centerOf(yourImg);
+  const ball = makeBallAt(p.x, p.y);
+
+  // Shrink sprite
+  yourImg.classList.add("recallOut");
+  await sleep(320);
+
+  // Cleanup
+  yourImg.classList.remove("recallOut");
+  yourImg.classList.add("hiddenSprite");
+  yourImg.classList.remove("invisibleSprite");
+  ball.remove();
+}
+
+async function throwBallAndPopSprite(targetEl) {
+  // We need target position; keep element in layout but invisible.
+  targetEl.classList.remove("hiddenSprite");
+  targetEl.classList.add("invisibleSprite");
+
+  const target = centerOf(targetEl);
+
+  // Start off-screen bottom-left (feels like a throw)
+  const start = { x: 80, y: window.innerHeight - 60 };
+  const ball = makeBallAt(start.x, start.y);
+
+  // Fly to target
+  ball.animate(
+    [
+      { transform: "translate(-50%, -50%) rotate(0deg) scale(1)" },
+      { transform: "translate(-50%, -50%) rotate(360deg) scale(1.05)" },
+      { transform: "translate(-50%, -50%) rotate(540deg) scale(1)" }
+    ],
+    { duration: 420, easing: "cubic-bezier(.22,1,.36,1)" }
+  );
+
+  ball.animate(
+    [
+      { left: `${start.x}px`, top: `${start.y}px` },
+      { left: `${target.x}px`, top: `${target.y}px` }
+    ],
+    { duration: 420, easing: "cubic-bezier(.22,1,.36,1)", fill: "forwards" }
+  );
+
+  await sleep(420);
+
+  // "Open" flash
+  ball.classList.remove("spin");
+  ball.animate(
+    [
+      { transform: "translate(-50%, -50%) scale(1)", opacity: 1 },
+      { transform: "translate(-50%, -50%) scale(1.45)", opacity: 0 }
+    ],
+    { duration: 180, easing: "ease-out", fill: "forwards" }
+  );
+
+  await sleep(180);
+  ball.remove();
+
+  // Pop sprite in
+  targetEl.classList.remove("invisibleSprite");
+  targetEl.classList.add("popIn");
+  await sleep(340);
+  targetEl.classList.remove("popIn");
+}
+
 // ---- Game flow ----
 function requireProfile() {
   const name = (state.profile.name || "").trim();
@@ -305,6 +400,9 @@ async function newRound() {
   clearRevealUI();
   resetHintUI();
 
+  // ✅ Recall previous Pokémon (if one is visible)
+  await recallIntoBallIfVisible();
+
   if (!requireProfile()) return;
 
   applyDifficultyToRound();
@@ -318,18 +416,22 @@ async function newRound() {
     round.attempts = 0;
     round.active = true;
 
-    // UI: opponent is visible, your pokemon silhouette is hidden
+    // Opponent visible
     oppNamePlate.textContent = data?.opponent?.name || "Opponent";
     oppImg.src = data?.opponent?.front || "";
     oppImg.classList.toggle("hiddenSprite", !oppImg.src);
 
+    // Your silhouette setup (but we will pop it in with a Pokéball)
     yourNamePlate.textContent = "???";
     yourImg.src = data?.your?.back || "";
-    yourImg.classList.toggle("hiddenSprite", !yourImg.src);
+    yourImg.classList.remove("hiddenSprite");
     yourImg.classList.add("silhouette");
 
     placeholder.style.display = "none";
     roundStatus.textContent = "Match started. Guess your Pokémon to win rating.";
+
+    // ✅ Throw Pokéball & pop silhouette
+    await throwBallAndPopSprite(yourImg);
 
     guessInput.value = "";
     guessInput.focus();
@@ -350,7 +452,6 @@ async function revealAndEndLoss(reason) {
   try {
     const info = await apiGet(`/api/reveal/${round.yourId}`);
     showReveal(info);
-    // End as loss
     finalizeMatch(false, info?.name || "Unknown", reason);
   } catch (e) {
     setMessage(`Reveal failed: ${e.message}`);
@@ -365,7 +466,7 @@ function showReveal(info) {
   revealName.textContent = name;
   revealTypes.textContent = types;
 
-  // Also reveal player sprite (remove silhouette)
+  // reveal player sprite
   yourNamePlate.textContent = name;
   yourImg.classList.remove("silhouette");
 
@@ -428,13 +529,10 @@ async function submitGuess() {
 
     const res = await apiPost("/api/guess", { id: round.yourId, guess });
     if (res.correct) {
-      // win: reveal + rating update
       const info = await apiGet(`/api/reveal/${round.yourId}`);
       showReveal(info);
       finalizeMatch(true, info?.name || "Unknown", "Correct guess!");
     } else {
-      // wrong guess: small HP damage (keeps it “battle-like”)
-      // Damage scales with difficulty
       const diff = difficultySel.value;
       const dmg = diff === "hard" ? 12 : diff === "easy" ? 8 : 10;
       damage(dmg, `Not quite. You took ${dmg} damage.`);
@@ -455,15 +553,17 @@ function nowString() {
 function finalizeMatch(didWin, answer, reason) {
   if (!round.active) return;
   round.active = false;
+
+  // ✅ Step 5: Win/Loss visual feedback
   const bf = document.querySelector(".battlefield");
   if (bf) {
     bf.classList.remove("winFlash", "lossFade");
     bf.classList.add(didWin ? "winFlash" : "lossFade");
     setTimeout(() => bf.classList.remove("winFlash", "lossFade"), didWin ? 650 : 750);
   }
+
   const r0 = state.profile.rating;
   const { newRating, delta } = updateRating(r0, round.botRating, didWin, round.kFactor);
-
   state.profile.rating = newRating;
 
   if (didWin) {
@@ -495,7 +595,6 @@ function finalizeMatch(didWin, answer, reason) {
     reason
   });
 
-  // disable further actions until new round
   guessInput.blur();
 }
 
@@ -578,15 +677,6 @@ function clearHistory() {
 
 // ---- Init ----
 async function init() {
-  // You should set BASE_URL to your Render backend URL once deployed.
-  // Example: BASE_URL = "https://your-service.onrender.com";
-  //
-  // For a clean workflow, keep DEFAULT_BACKEND as localhost and change
-  // BASE_URL when you deploy.
-  //
-  // If you want a quick toggle without changing code, you can hardcode here:
-  // BASE_URL = "https://YOUR-RENDER-APP.onrender.com";
-
   renderDashboard();
   const ok = await checkBackend();
   if (!ok) {
@@ -595,6 +685,7 @@ async function init() {
     setMessage("Backend OK. Save your username, then start a round.");
   }
 }
+
 // === Cursor Trail: PokéSparks ===
 (() => {
   let last = 0;
@@ -610,15 +701,14 @@ async function init() {
     spark.style.left = `${e.clientX}px`;
     spark.style.top = `${e.clientY}px`;
 
-    // Random lightning direction
     const angle = Math.random() * 360;
     spark.style.setProperty("--angle", `${angle}deg`);
 
     document.body.appendChild(spark);
-
     setTimeout(() => spark.remove(), 400);
   });
 })();
+
 saveProfileBtn.addEventListener("click", saveProfile);
 newBtn.addEventListener("click", newRound);
 
@@ -637,7 +727,6 @@ hintDexBtn.addEventListener("click", useDexHint);
 
 clearHistoryBtn.addEventListener("click", clearHistory);
 
-// Keep difficulty changes visible even mid-round (doesn't retroactively change current match)
 difficultySel.addEventListener("change", () => {
   renderRoundMeta();
 });

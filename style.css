@@ -184,6 +184,7 @@ select, input{
     radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.42) 100%);
   pointer-events:none;
 }
+
 .battlefield::before{
   content:"";
   position:absolute;
@@ -205,6 +206,7 @@ select, input{
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
+
 .side{
   position:absolute;
   width:50%;
@@ -254,14 +256,12 @@ select, input{
   image-rendering:pixelated;
   user-select:none;
 
-  /* IMPORTANT: use a variable so silhouette can override it cleanly */
   --sprite-filter: drop-shadow(0 18px 14px rgba(0,0,0,0.55));
   filter: var(--sprite-filter);
 
   animation: float 3s ease-in-out infinite;
   will-change: transform;
 
-  /* Fix: render sprites above HUD panels */
   z-index: 3;
 }
 
@@ -275,13 +275,18 @@ select, input{
   top:74px;
 }
 
-/* Silhouette (preserved even with float + shadow) */
+/* Silhouette preserved */
 .silhouette{
   --sprite-filter: brightness(0) contrast(12) drop-shadow(0 18px 14px rgba(0,0,0,0.55));
 }
 
 .hiddenSprite{
   display:none;
+}
+
+/* NEW: keep layout/position but hide visually (so we can animate pokeball to its spot) */
+.invisibleSprite{
+  opacity: 0;
 }
 
 /* ===========================
@@ -609,6 +614,10 @@ select, input{
   .placeholder{ left:22px; }
 }
 
+/* ===========================
+   CURSOR SPARKS
+   =========================== */
+
 .spark {
   position: fixed;
   width: 6px;
@@ -641,6 +650,7 @@ select, input{
   100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
 }
 
+/* ✅ Step 3: Shake on damage */
 @keyframes shake {
   0% { transform: translateX(0); }
   20% { transform: translateX(-6px); }
@@ -649,36 +659,88 @@ select, input{
   80% { transform: translateX(4px); }
   100% { transform: translateX(0); }
 }
+.shake { animation: shake 0.3s ease; }
 
-.shake {
-  animation: shake 0.3s ease;
-}
-
+/* ✅ Step 5: Win/Loss feedback */
 @keyframes winFlash {
   0%   { box-shadow: inset 0 0 0 rgba(34,197,94,0); }
   50%  { box-shadow: inset 0 0 90px rgba(34,197,94,0.55); }
   100% { box-shadow: inset 0 0 0 rgba(34,197,94,0); }
 }
-
-.battlefield.winFlash {
-  animation: winFlash 0.6s ease;
-}
+.battlefield.winFlash { animation: winFlash 0.6s ease; }
 
 @keyframes lossFade {
   0%   { filter: saturate(1) brightness(1); }
   50%  { filter: saturate(0.8) brightness(0.85); }
   100% { filter: saturate(1) brightness(1); }
 }
+.battlefield.lossFade { animation: lossFade 0.7s ease; }
 
-.battlefield.lossFade {
-  animation: lossFade 0.7s ease;
-}
+/* ✅ Step 7: Battle flash on guess */
 @keyframes flash {
   0%   { filter: brightness(1); }
   50%  { filter: brightness(1.8); }
   100% { filter: brightness(1); }
 }
+.battleFlash { animation: flash 0.2s ease; }
 
-.battleFlash {
-  animation: flash 0.2s ease;
+/* ===========================
+   Pokéball Round Transition
+   =========================== */
+
+.pokeball {
+  position: fixed;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  z-index: 9998;
+  pointer-events: none;
+
+  background: linear-gradient(#ef4444 0 50%, #f8fafc 50% 100%);
+  border: 3px solid #111827;
+  box-shadow: 0 12px 22px rgba(0,0,0,0.35);
 }
+
+.pokeball::before{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:50%;
+  height:4px;
+  transform: translateY(-50%);
+  background:#111827;
+}
+
+.pokeball::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:12px;
+  height:12px;
+  transform: translate(-50%, -50%);
+  background:#f8fafc;
+  border:3px solid #111827;
+  border-radius:999px;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.35) inset;
+}
+
+@keyframes ballSpin {
+  0%   { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.pokeball.spin { animation: ballSpin 280ms linear infinite; }
+
+@keyframes recallShrink {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0); opacity: 0; }
+}
+.recallOut { animation: recallShrink 320ms ease-in forwards; }
+
+@keyframes popIn {
+  0%   { transform: scale(0.7); opacity: 0; }
+  70%  { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.popIn { animation: popIn 340ms cubic-bezier(.22,1,.36,1) forwards; }
