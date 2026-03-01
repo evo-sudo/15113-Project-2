@@ -1,0 +1,9 @@
+- Refactored sprite animation system to prevent transform conflicts.
+- Separated animation states (float, shake, pop-in) into isolated CSS classes.
+- Added smooth HP bar scaling using transform transitions.
+- Implemented Pokéball recall animation when starting a new round.
+- Added win/loss visual feedback effects to the battlefield.
+- Adjusted difficulty system to properly scale bot rating and K-factor.
+- Fixed Git merge issues that overwrote local changes.
+- Ensured GitHub Pages deployment used correct root branch configuration.
+- Added cache-busting to resolve stale CSS/JS deployment issues.

@@ -1,0 +1,3 @@
+PokéArena is a ranked Pokémon guessing battle game that connects a Flask backend (deployed on Render) to a frontend hosted on GitHub Pages. Each round generates a random Pokémon through the backend, and the player must guess it using hints while managing an HP system. The frontend handles game state, animations, and rating updates, while the backend handles Pokémon selection, validation, and data retrieval from PokéAPI.
+
+I implemented a local Elo-style ranking system that adjusts rating based on difficulty and match outcome. The project demonstrates API communication using async JavaScript, REST endpoint integration, state management, and UI/UX enhancements such as sprite animations, smooth HP transitions, and round-based visual effects.
