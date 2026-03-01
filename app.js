@@ -450,7 +450,12 @@ function nowString() {
 function finalizeMatch(didWin, answer, reason) {
   if (!round.active) return;
   round.active = false;
-
+  const bf = document.querySelector(".battlefield");
+  if (bf) {
+    bf.classList.remove("winFlash", "lossFade");
+    bf.classList.add(didWin ? "winFlash" : "lossFade");
+    setTimeout(() => bf.classList.remove("winFlash", "lossFade"), didWin ? 650 : 750);
+  }
   const r0 = state.profile.rating;
   const { newRating, delta } = updateRating(r0, round.botRating, didWin, round.kFactor);
 

@@ -620,3 +620,22 @@ select, input{
   animation: shake 0.3s ease;
 }
 
+@keyframes winFlash {
+  0%   { box-shadow: inset 0 0 0 rgba(34,197,94,0); }
+  50%  { box-shadow: inset 0 0 90px rgba(34,197,94,0.55); }
+  100% { box-shadow: inset 0 0 0 rgba(34,197,94,0); }
+}
+
+.battlefield.winFlash {
+  animation: winFlash 0.6s ease;
+}
+
+@keyframes lossFade {
+  0%   { filter: saturate(1) brightness(1); }
+  50%  { filter: saturate(0.8) brightness(0.85); }
+  100% { filter: saturate(1) brightness(1); }
+}
+
+.battlefield.lossFade {
+  animation: lossFade 0.7s ease;
+}
