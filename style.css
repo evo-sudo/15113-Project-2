@@ -213,6 +213,17 @@ select, input{
   top:190px;
 }
 
+/* ===========================
+   SPRITES
+   =========================== */
+
+/* Step 1: Sprite idle float (game feel) */
+@keyframes float {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+
 .pokeSprite{
   position:absolute;
   width:200px;
@@ -220,7 +231,16 @@ select, input{
   object-fit:contain;
   image-rendering:pixelated;
   user-select:none;
-  filter:drop-shadow(0 14px 12px rgba(0,0,0,0.5));
+
+  /* IMPORTANT: use a variable so silhouette can override it cleanly */
+  --sprite-filter: drop-shadow(0 18px 14px rgba(0,0,0,0.55));
+  filter: var(--sprite-filter);
+
+  animation: float 3s ease-in-out infinite;
+  will-change: transform;
+
+  /* Fix: render sprites above HUD panels */
+  z-index: 3;
 }
 
 .player .pokeSprite{
@@ -233,8 +253,9 @@ select, input{
   top:74px;
 }
 
+/* Silhouette (preserved even with float + shadow) */
 .silhouette{
-  filter:brightness(0) contrast(12);
+  --sprite-filter: brightness(0) contrast(12) drop-shadow(0 18px 14px rgba(0,0,0,0.55));
 }
 
 .hiddenSprite{
