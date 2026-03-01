@@ -417,6 +417,11 @@ async function submitGuess() {
   }
 
   setLoading(true);
+
+  // ✅ STEP 7 — BATTLE FLASH ONLY ON GUESS
+  document.body.classList.add("battleFlash");
+  setTimeout(() => document.body.classList.remove("battleFlash"), 200);
+
   try {
     round.attempts += 1;
     renderRoundMeta();

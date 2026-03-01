@@ -171,6 +171,7 @@ select, input{
   background-size:cover;
   background-position:center;
   background-repeat:no-repeat;
+  isolation: isolate;
 }
 
 .battlefield::after{
@@ -183,7 +184,27 @@ select, input{
     radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.42) 100%);
   pointer-events:none;
 }
+.battlefield::before{
+  content:"";
+  position:absolute;
+  inset:-20%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255,255,255,0.14) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: lightSweep 9s linear infinite;
+  pointer-events:none;
+  mix-blend-mode: screen;
+  z-index: 1;
+}
 
+@keyframes lightSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
 .side{
   position:absolute;
   width:50%;
@@ -385,9 +406,21 @@ select, input{
 }
 
 .btn.primary{
-  background:var(--red);
+  background: linear-gradient(to bottom, #ff3b3b, #b91c1c);
   color:white;
-  border-color:var(--redDark);
+  border-color:#7f1d1d;
+  box-shadow: 0 6px 0 #7f1d1d;
+  transform: translateY(0);
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.btn.primary:hover{
+  filter: brightness(1.05);
+}
+
+.btn.primary:active{
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #7f1d1d;
 }
 
 .btn.small{
@@ -639,4 +672,13 @@ select, input{
 
 .battlefield.lossFade {
   animation: lossFade 0.7s ease;
+}
+@keyframes flash {
+  0%   { filter: brightness(1); }
+  50%  { filter: brightness(1.8); }
+  100% { filter: brightness(1); }
+}
+
+.battleFlash {
+  animation: flash 0.2s ease;
 }
