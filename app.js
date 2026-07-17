@@ -119,9 +119,9 @@ let round = {
 
 // Difficulty tuning (controls bot rating and K-factor and starting HP)
 const DIFF = {
-  easy:    { bot: 930,  k: 18, hp: 120, label: "EASY" },
-  standard:{ bot: 1000, k: 24, hp: 100, label: "STANDARD" },
-  hard:    { bot: 1080, k: 32, hp: 90,  label: "HARD" }
+  easy: { bot: 930, k: 18, hp: 120, label: "EASY" },
+  standard: { bot: 1000, k: 24, hp: 100, label: "STANDARD" },
+  hard: { bot: 1080, k: 32, hp: 90, label: "HARD" }
 };
 
 function setMessage(text) {
@@ -274,11 +274,11 @@ function renderDashboard() {
 
 function escapeHtml(s) {
   return String(s || "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 // ===========================
@@ -305,39 +305,71 @@ function makeBallAt(x, y) {
 }
 
 async function recallIntoBallIfVisible() {
-  // If sprite isn't visible, nothing to recall.
   if (!yourImg) return;
   if (yourImg.classList.contains("hiddenSprite")) return;
-
-  // If placeholder is still showing, treat as "no active visual"
   if (placeholder && placeholder.style.display !== "none") return;
 
   const p = centerOf(yourImg);
   const ball = makeBallAt(p.x, p.y);
 
-  // Shrink sprite
+  yourImg.classList.remove("shake", "popIn", "invisibleSprite");
   yourImg.classList.add("recallOut");
+
   await sleep(320);
 
-  // Cleanup
   yourImg.classList.remove("recallOut");
   yourImg.classList.add("hiddenSprite");
   yourImg.classList.remove("invisibleSprite");
   ball.remove();
 }
 
+// ---- HARD RESET HELPERS ----
+function hardResetPlayerSprite() {
+  yourImg.className = "pokeSprite hiddenSprite";
+  yourImg.style.transform = "";
+  yourImg.style.opacity = "";
+  yourImg.style.filter = "";
+  yourImg.style.animation = "";
+  yourImg.removeAttribute("src");
+  yourImg.onload = null;
+  yourImg.onerror = null;
+}
+
+function hardResetOpponentSprite() {
+  oppImg.className = "pokeSprite hiddenSprite";
+  oppImg.style.transform = "";
+  oppImg.style.opacity = "";
+  oppImg.style.filter = "";
+  oppImg.style.animation = "";
+  oppImg.removeAttribute("src");
+  oppImg.onload = null;
+  oppImg.onerror = null;
+}
+
+function waitForImageLoad(img, src) {
+  return new Promise((resolve, reject) => {
+    img.onload = () => {
+      img.onload = null;
+      img.onerror = null;
+      resolve();
+    };
+    img.onerror = () => {
+      img.onload = null;
+      img.onerror = null;
+      reject(new Error(`Image failed to load: ${src}`));
+    };
+    img.src = src;
+  });
+}
+
 async function throwBallAndPopSprite(targetEl) {
-  // We need target position; keep element in layout but invisible.
   targetEl.classList.remove("hiddenSprite");
   targetEl.classList.add("invisibleSprite");
 
   const target = centerOf(targetEl);
-
-  // Start off-screen bottom-left (feels like a throw)
   const start = { x: 80, y: window.innerHeight - 60 };
   const ball = makeBallAt(start.x, start.y);
 
-  // Fly to target
   ball.animate(
     [
       { transform: "translate(-50%, -50%) rotate(0deg) scale(1)" },
@@ -357,7 +389,6 @@ async function throwBallAndPopSprite(targetEl) {
 
   await sleep(420);
 
-  // "Open" flash
   ball.classList.remove("spin");
   ball.animate(
     [
@@ -370,7 +401,6 @@ async function throwBallAndPopSprite(targetEl) {
   await sleep(180);
   ball.remove();
 
-  // Pop sprite in
   targetEl.classList.remove("invisibleSprite");
   targetEl.classList.add("popIn");
   await sleep(340);
@@ -381,7 +411,7 @@ async function throwBallAndPopSprite(targetEl) {
 function requireProfile() {
   const name = (state.profile.name || "").trim();
   if (!name) {
-    setMessage("Set a username first (top bar), then click Save.");
+    setMessage("Set a username first (top bar), then click Save. (May take a few minutes to load the backend on Render.)");
     return false;
   }
   return true;
@@ -400,7 +430,6 @@ async function newRound() {
   clearRevealUI();
   resetHintUI();
 
-  // ✅ Recall previous Pokémon (if one is visible)
   await recallIntoBallIfVisible();
 
   if (!requireProfile()) return;
@@ -411,35 +440,55 @@ async function newRound() {
   setLoading(true);
   try {
     const data = await apiGet("/api/new-round");
-    // backend returns your.id + your.back sprite, and opponent prettyName/front
+
     round.yourId = data?.your?.id;
     round.attempts = 0;
     round.active = true;
 
-    // Opponent visible
-    oppNamePlate.textContent = data?.opponent?.name || "Opponent";
-    oppImg.src = data?.opponent?.front || "";
-    oppImg.classList.toggle("hiddenSprite", !oppImg.src);
+    // ---- FULL HARD RESET BEFORE REUSING IMAGES ----
+    hardResetPlayerSprite();
+    hardResetOpponentSprite();
 
-    // Your silhouette setup (but we will pop it in with a Pokéball)
     yourNamePlate.textContent = "???";
-    yourImg.src = data?.your?.back || "";
-    yourImg.classList.remove("hiddenSprite");
-    yourImg.classList.add("silhouette");
+    oppNamePlate.textContent = data?.opponent?.name || "Opponent";
 
     placeholder.style.display = "none";
     roundStatus.textContent = "Match started. Guess your Pokémon to win rating.";
 
-    // ✅ Throw Pokéball & pop silhouette
-    await throwBallAndPopSprite(yourImg);
+    // Load opponent image safely
+    if (data?.opponent?.front) {
+      try {
+        await waitForImageLoad(oppImg, data.opponent.front);
+        oppImg.classList.remove("hiddenSprite");
+      } catch {
+        oppImg.classList.add("hiddenSprite");
+      }
+    }
+
+    // Load player sprite safely
+    if (!data?.your?.back) {
+      throw new Error("Missing player sprite from backend.");
+    }
+
+    await waitForImageLoad(yourImg, data.your.back);
+
+    // Reset again after image load just to avoid stale Replit/preview transforms
+    yourImg.className = "pokeSprite hiddenSprite silhouette";
+    yourImg.style.transform = "";
+    yourImg.style.opacity = "";
+    yourImg.style.filter = "";
+    yourImg.style.animation = "";
 
     guessInput.value = "";
     guessInput.focus();
 
     renderRoundMeta();
+
+    await throwBallAndPopSprite(yourImg);
   } catch (e) {
     setMessage(`Backend error: ${e.message}`);
     roundStatus.textContent = "Could not start round.";
+    round.active = false;
   } finally {
     setLoading(false);
   }
@@ -462,18 +511,16 @@ async function revealAndEndLoss(reason) {
 
 function showReveal(info) {
   const name = info?.name || "—";
-  const types = (info?.types || []).map(t => String(t)).join(", ") || "—";
+  const types = (info?.types || []).map((t) => String(t)).join(", ") || "—";
   revealName.textContent = name;
   revealTypes.textContent = types;
 
-  // reveal player sprite
   yourNamePlate.textContent = name;
   yourImg.classList.remove("silhouette");
 
-  // Stats bars
   const stats = info?.stats || [];
-  const max = Math.max(1, ...stats.map(s => s.value || 0));
-  statsBars.innerHTML = stats.map(s => {
+  const max = Math.max(1, ...stats.map((s) => s.value || 0));
+  statsBars.innerHTML = stats.map((s) => {
     const label = (s.name || "stat").replaceAll("-", " ");
     const val = s.value || 0;
     const pct = Math.round((val / max) * 100);
@@ -493,7 +540,8 @@ function showReveal(info) {
 function damage(amount, why) {
   round.hp = clamp(round.hp - amount, 0, round.hpMax);
 
-  // ✅ SHAKE ON DAMAGE
+  yourImg.classList.remove("shake");
+  void yourImg.offsetWidth;
   yourImg.classList.add("shake");
   setTimeout(() => yourImg.classList.remove("shake"), 300);
 
@@ -519,7 +567,6 @@ async function submitGuess() {
 
   setLoading(true);
 
-  // ✅ STEP 7 — BATTLE FLASH ONLY ON GUESS
   document.body.classList.add("battleFlash");
   setTimeout(() => document.body.classList.remove("battleFlash"), 200);
 
@@ -554,7 +601,6 @@ function finalizeMatch(didWin, answer, reason) {
   if (!round.active) return;
   round.active = false;
 
-  // ✅ Step 5: Win/Loss visual feedback
   const bf = document.querySelector(".battlefield");
   if (bf) {
     bf.classList.remove("winFlash", "lossFade");
